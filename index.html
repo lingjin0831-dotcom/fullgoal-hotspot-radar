@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>富国基金热点雷达｜公开版</title>
+    <meta
+      name="description"
+      content="基于富国基金产品库与 iFinD MCP 快照的财经热点、事件日历和产品匹配公开看板。"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">富</div>
+          <div>
+            <strong>富国热点雷达</strong>
+            <span>Public Radar</span>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-item active" data-tab="overview" title="总览">
+            <span class="nav-icon">◎</span>
+            <span>总览</span>
+          </button>
+          <button class="nav-item" data-tab="exploded" title="已爆发热点">
+            <span class="nav-icon">▲</span>
+            <span>已爆发</span>
+          </button>
+          <button class="nav-item" data-tab="rising" title="潜在升温热点">
+            <span class="nav-icon">↗</span>
+            <span>升温中</span>
+          </button>
+          <button class="nav-item" data-tab="events" title="未来事件">
+            <span class="nav-icon">□</span>
+            <span>事件日历</span>
+          </button>
+          <button class="nav-item" data-tab="products" title="产品库">
+            <span class="nav-icon">▣</span>
+            <span>产品库</span>
+          </button>
+        </nav>
+
+        <div class="source-panel">
+          <div class="panel-title">公开数据源</div>
+          <label><input type="checkbox" value="jin10" checked /> 金十数据</label>
+          <label><input type="checkbox" value="eastmoney_topic" checked /> 东财股吧话题</label>
+          <label><input type="checkbox" value="eastmoney_calendar" checked /> 东财财经日历</label>
+          <label><input type="checkbox" value="newsflash" checked /> 市场快讯</label>
+          <label><input type="checkbox" value="ifind" checked /> IFIND MCP</label>
+        </div>
+
+        <div class="import-box">
+          <div>
+            <span>富国产品库</span>
+            <strong id="productStatus">加载中</strong>
+          </div>
+          <label class="icon-button" title="导入富国基金产品 Excel">
+            +
+            <input id="productFile" type="file" accept=".xlsx,.xls,.csv" />
+          </label>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="dataFreshness">公开静态版 · 正在加载数据</p>
+            <h1>富国基金财经热点雷达</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-button" id="refreshBtn" title="重新计算产品匹配">
+              <span>↻</span>
+              重算匹配
+            </button>
+            <button class="primary-button" id="exportBtn" title="导出当前筛选结果">
+              <span>⇩</span>
+              导出选题池
+            </button>
+          </div>
+        </header>
+
+        <section class="control-band" aria-label="筛选条件">
+          <div class="search-wrap">
+            <span>⌕</span>
+            <input id="searchInput" type="search" placeholder="搜索热点、事件、行业、富国产品" />
+          </div>
+          <div class="filter-group">
+            <select id="stageFilter" aria-label="阶段筛选">
+              <option value="all">全部阶段</option>
+              <option value="爆发初期">爆发初期</option>
+              <option value="爆发高点">爆发高点</option>
+              <option value="高位持续">高位持续</option>
+              <option value="热度回落">热度回落</option>
+              <option value="萌芽">萌芽</option>
+              <option value="升温">升温</option>
+              <option value="扩散">扩散</option>
+              <option value="即将爆发">即将爆发</option>
+            </select>
+            <select id="typeFilter" aria-label="事件类型筛选">
+              <option value="all">全部类型</option>
+              <option value="宏观经济数据">宏观经济数据</option>
+              <option value="国内政策会议">国内政策会议</option>
+              <option value="海外央行会议">海外央行会议</option>
+              <option value="行业大会">行业大会</option>
+              <option value="上市公司财报">上市公司财报</option>
+              <option value="指数调仓">指数调仓</option>
+              <option value="大宗商品数据">大宗商品数据</option>
+            </select>
+            <label class="switch" title="只看产品相关度较高的选题">
+              <input id="highFitOnly" type="checkbox" />
+              <span></span>
+              高相关
+            </label>
+            <select id="productTypeFilter" aria-label="产品类型筛选">
+              <option value="all">全部产品</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="window-band" aria-label="时间窗口">
+          <div class="section-heading">
+            <div>
+              <span>多时间窗口</span>
+              <strong id="windowSummary">过去一周 + 未来一周</strong>
+            </div>
+            <button class="text-button" id="openWindowBtn">添加窗口</button>
+          </div>
+          <div class="window-chips" id="windowChips"></div>
+        </section>
+
+        <section class="metric-grid" aria-label="核心指标">
+          <article class="metric">
+            <span>过去一周讨论热点</span>
+            <strong id="metricExploded">0</strong>
+            <em>覆盖已爆发板块</em>
+          </article>
+          <article class="metric">
+            <span>潜在升温话题</span>
+            <strong id="metricRising">0</strong>
+            <em>低热度 / 高增速</em>
+          </article>
+          <article class="metric">
+            <span>未来确定事件</span>
+            <strong id="metricEvents">0</strong>
+            <em>未来 7 天</em>
+          </article>
+          <article class="metric metric-wide">
+            <span>富国产品匹配</span>
+            <strong id="metricProducts">0</strong>
+            <em id="productMetricNote">来自完整产品库</em>
+          </article>
+        </section>
+
+        <section class="data-note" aria-label="数据说明">
+          <div>
+            <span>数据层</span>
+            <strong>前端使用公开静态快照；iFinD MCP 在本地生成热点快照，避免暴露私有 token。</strong>
+          </div>
+          <button class="text-button" data-jump="products">查看产品覆盖</button>
+        </section>
+
+        <section class="insight-strip" aria-label="本期重点问题">
+          <div class="insight-panel">
+            <span>过去一周讨论什么</span>
+            <div class="insight-card-list" id="pastDiscussionCards"></div>
+          </div>
+          <div class="insight-panel">
+            <span>下周确定大事</span>
+            <div class="insight-card-list" id="nextEventCards"></div>
+          </div>
+          <div class="insight-panel">
+            <span>正在升温</span>
+            <div class="insight-card-list" id="risingSignalCards"></div>
+          </div>
+        </section>
+
+        <section class="signal-board" aria-label="热点热度矩阵">
+          <div class="section-heading">
+            <div>
+              <span>热度矩阵</span>
+              <strong>横轴热度，纵轴增速，快速识别爆发与升温</strong>
+            </div>
+          </div>
+          <div class="market-map" id="marketMap"></div>
+        </section>
+
+        <section class="content-view active" id="overviewView" data-view="overview">
+          <div class="two-column">
+            <div>
+              <div class="section-heading">
+                <div>
+                  <span>已爆发热点</span>
+                  <strong>适合快速形成当周选题</strong>
+                </div>
+                <button class="text-button" data-jump="exploded">查看全部</button>
+              </div>
+              <div class="card-list compact" id="overviewExploded"></div>
+            </div>
+            <div>
+              <div class="section-heading">
+                <div>
+                  <span>潜在升温热点</span>
+                  <strong>适合提前布局内容</strong>
+                </div>
+                <button class="text-button" data-jump="rising">查看全部</button>
+              </div>
+              <div class="card-list compact" id="overviewRising"></div>
+            </div>
+          </div>
+
+          <div class="section-heading event-overview-title">
+            <div>
+              <span>未来 7 天事件驱动</span>
+              <strong>按时间轴追踪确定性催化</strong>
+            </div>
+            <button class="text-button" data-jump="events">打开日历</button>
+          </div>
+          <div class="timeline" id="overviewEvents"></div>
+        </section>
+
+        <section class="content-view" id="explodedView" data-view="exploded">
+          <div class="section-heading">
+            <div>
+              <span>已爆发热点</span>
+              <strong>事件描述、链接、阶段和富国产品匹配</strong>
+            </div>
+          </div>
+          <div class="card-grid" id="explodedCards"></div>
+        </section>
+
+        <section class="content-view" id="risingView" data-view="rising">
+          <div class="section-heading">
+            <div>
+              <span>持续发酵潜在升温热点</span>
+              <strong>低热度、高增速，提前进入选题池</strong>
+            </div>
+          </div>
+          <div class="card-grid" id="risingCards"></div>
+        </section>
+
+        <section class="content-view" id="eventsView" data-view="events">
+          <div class="section-heading">
+            <div>
+              <span>事件驱动型话题</span>
+              <strong>未来 7 天确定性大事与产品映射</strong>
+            </div>
+            <div class="segmented" role="tablist" aria-label="日历展示模式">
+              <button class="active" data-mode="timeline">时间轴</button>
+              <button data-mode="calendar">周历</button>
+            </div>
+          </div>
+          <div class="timeline" id="eventTimeline"></div>
+          <div class="week-grid hidden" id="eventCalendar"></div>
+        </section>
+
+        <section class="content-view" id="productsView" data-view="products">
+          <div class="section-heading">
+            <div>
+              <span>富国基金产品库</span>
+              <strong>已接入 fullgoal_products.xlsx，支持按名称、代码、分类、风险和主题标签筛选</strong>
+            </div>
+          </div>
+          <div class="product-dashboard">
+            <div class="product-stat">
+              <span>产品总数</span>
+              <strong id="productTotal">0</strong>
+            </div>
+            <div class="product-stat">
+              <span>一级分类</span>
+              <strong id="productTypeCount">0</strong>
+            </div>
+            <div class="product-stat">
+              <span>主题标签</span>
+              <strong id="productTagCount">0</strong>
+            </div>
+          </div>
+          <div class="product-layout">
+            <div class="taxonomy-panel">
+              <h2>分类分布</h2>
+              <div id="productTypeBars"></div>
+            </div>
+            <div class="product-table-wrap">
+              <table class="product-table">
+                <thead>
+                  <tr>
+                    <th>代码</th>
+                    <th>产品简称</th>
+                    <th>分类</th>
+                    <th>风险</th>
+                    <th>标签</th>
+                  </tr>
+                </thead>
+                <tbody id="productTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="windowDialog">
+      <form method="dialog" class="dialog-card">
+        <div class="section-heading">
+          <div>
+            <span>添加时间窗口</span>
+            <strong>可同时筛选多个日期范围</strong>
+          </div>
+          <button class="icon-button" value="cancel" title="关闭">×</button>
+        </div>
+        <label>
+          窗口名称
+          <input id="windowName" type="text" placeholder="例如：政策观察窗口" />
+        </label>
+        <div class="date-row">
+          <label>
+            开始日期
+            <input id="windowStart" type="date" />
+          </label>
+          <label>
+            结束日期
+            <input id="windowEnd" type="date" />
+          </label>
+        </div>
+        <menu>
+          <button class="ghost-button" value="cancel">取消</button>
+          <button class="primary-button" id="addWindowConfirm" value="default">添加</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./data/fullgoal-products.js"></script>
+    <script src="./data/ifind-snapshot.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
